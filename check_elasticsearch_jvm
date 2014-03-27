@@ -38,9 +38,9 @@ class ElasticSearchJvmCheck(NagiosCheck):
         # Request a bunch of useful numbers that we export as perfdata.
         # Details like the number of get, search, and indexing
         # operations come from here.
-        es_node = get_json(r'http://%s:%d/_cluster/nodes/_local/?all=true' % (host, port))
+        es_node = get_json(r'http://%s:%d/_nodes/_local/?all=true' % (host, port))
 
-        es_stats = get_json(r'http://%s:%d/_cluster/nodes/_local/'
+        es_stats = get_json(r'http://%s:%d/_nodes/_local/'
                              'stats?all=true' % (host, port))
 
         myid = es_stats['nodes'].keys()[0]
@@ -125,7 +125,6 @@ class ElasticSearchJvmCheck(NagiosCheck):
 
         heap_used_b = int(es_stats['nodes'][myid]['jvm']['mem']['heap_used_in_bytes'])
         heap_max_b  = int(es_node ['nodes'][myid]['jvm']['mem']['heap_max_in_bytes'])
-        heap_used   = es_stats['nodes'][myid]['jvm']['mem']['heap_used']
         heap_max    = es_node ['nodes'][myid]['jvm']['mem']['heap_max']
         heap_usage_percent = (float(heap_used_b)/float(heap_max_b))*100
 
