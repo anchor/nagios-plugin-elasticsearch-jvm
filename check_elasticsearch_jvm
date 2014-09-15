@@ -45,7 +45,7 @@ class ElasticSearchJvmCheck(NagiosCheck):
 
         myid = es_stats['nodes'].keys()[0]
     
-        es_node_jvm = get_json(r'http://%s:%d/_nodes/%s/stats?jvm=true' % (host, port, myid))
+        es_node_jvm = get_json(r'http://%s:%d/_nodes/%s/stats/jvm?human' % (host, port, myid))
 
         #
         # Perfdata
@@ -106,26 +106,15 @@ class ElasticSearchJvmCheck(NagiosCheck):
 
         collectors = es_node_jvm["nodes"][myid]["jvm"]["gc"]["collectors"].keys()
         for collector in collectors:
-            # Full collector names are too long for RRD; contract them
-            # to initialisms. 
-            collector_initials = "".join([ c for c in collector if (
-                ord(c) >= ord('A') and
-                ord(c) <= ord('Z')
-            )])
-            collector_slug = collector_initials.lower()
-            metrics = [["%s_collections" % collector_slug, "collectors.%s.collection_count" % collector, "c"],
-                       ["%s_time_ms" % collector_slug, "collectors.%s.time_in_millis" % collector, "c"],
+            metrics = [["%s_collections" % collector, "collectors.%s.collection_count" % collector, "c"],
+                       ["%s_time_ms" % collector, "collectors.%s.collection_time_in_millis" % collector, "c"],
             ]
             dict2perfdata(es_node_jvm["nodes"][myid]["jvm"]["gc"], metrics)
 
-        metrics = [["collections", "collection_count", "c"],
-                   ["collection_time_ms", "collection_time_in_millis", "c"],
-        ]
-        dict2perfdata(es_node_jvm["nodes"][myid]["jvm"]["gc"], metrics)
-
         heap_used_b = int(es_stats['nodes'][myid]['jvm']['mem']['heap_used_in_bytes'])
         heap_max_b  = int(es_node ['nodes'][myid]['jvm']['mem']['heap_max_in_bytes'])
-        heap_max    = es_node ['nodes'][myid]['jvm']['mem']['heap_max']
+        heap_used    = es_node_jvm['nodes'][myid]['jvm']['mem']['heap_used']
+        heap_max    = es_node_jvm['nodes'][myid]['jvm']['mem']['heap_max']
         heap_usage_percent = (float(heap_used_b)/float(heap_max_b))*100
 
         if opts.crit and heap_usage_percent >= float(opts.crit):
